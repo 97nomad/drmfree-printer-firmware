@@ -143,7 +143,7 @@ void parse_string(String text)
     Serial.print(" Y: ");
     Serial.println(coord_y);
     break;
-  case 'Z':
+  case '|':
     coord_x = 0;
     coord_y = 0;
     target_x = 0;
