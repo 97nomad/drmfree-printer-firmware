@@ -1,27 +1,33 @@
 #include "engine.h"
 
-Engine::Engine(int pin_forward, int pin_backward) {
-    this->pin_forward = pin_forward;
-    this->pin_backward = pin_backward;
-    this->lock = false;
+Engine::Engine(int forward, int backward, int pwm) {
+    pin_forward = forward;
+    pin_backward = backward;
+    pin_pwm = pwm;
+    lock = false;
 }
 
-void Engine::start_forward() {
-    if (!this->lock) {
-        digitalWrite(this->pin_forward, HIGH);
-        this->lock = true;
+void Engine::StartForward() {
+    if (!lock) {
+        digitalWrite(pin_forward, HIGH);
+        lock = true;
     }
 }
 
-void Engine::start_backward() {
-    if (!this->lock) {
-        digitalWrite(this->pin_backward, HIGH);
-        this->lock = true;
+void Engine::StartBackward() {
+    if (!lock) {
+        digitalWrite(pin_backward, HIGH);
+        lock = true;
     }
 }
 
-void Engine::stop() {
-    digitalWrite(this->pin_forward, LOW);
-    digitalWrite(this->pin_backward, LOW);
-    this->lock = false;
+void Engine::Stop() {
+    digitalWrite(pin_forward, LOW);
+    digitalWrite(pin_backward, LOW);
+    SetSpeed(255);
+    lock = false;
+}
+
+void Engine::SetSpeed(int speed) {
+    analogWrite(pin_pwm, speed);
 }
