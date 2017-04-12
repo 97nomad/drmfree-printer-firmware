@@ -13,13 +13,14 @@ enum Units
 class GCode
 {
     public:
-        GCode(int dpm, int dpi);
+        GCode(int dpmm_x, int dpmm_y);
         Units units;
 
         void parse(int str);
-        int convert_to_points(float input);
+        int convert_to_points_x(float input);
+        int convert_to_points_y(float input);
     private:
-        int dots_per_mm;
-        int dots_per_in;
+        int dots_per_mm_x;
+        int dots_per_mm_y;
 };
 #endif

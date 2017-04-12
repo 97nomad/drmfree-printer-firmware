@@ -1,9 +1,9 @@
 #include "gcode.h"
 
-GCode::GCode(int dpm, int dpi) {
+GCode::GCode(int dpmm_x, int dpmm_y) {
     units = points;
-    dots_per_mm = dpm;
-    dots_per_in = dpi;
+    dots_per_mm_x = dpmm_x;
+    dots_per_mm_y = dpmm_y;
 }
 
 void GCode::parse(int str) {
@@ -17,13 +17,24 @@ void GCode::parse(int str) {
     }
 }
 
-int GCode::convert_to_points(float input) {
+int GCode::convert_to_points_x(float input) {
     switch(units) {
         case points:
             return input;
         case millimeters:
-            return input * dots_per_mm;
+            return input * dots_per_mm_x;
         case inches:
-            return input * dots_per_in;
+            return input * dots_per_mm_x * 25.4;
+    }
+}
+
+int GCode::convert_to_points_y(float input) {
+    switch(units) {
+        case points:
+            return input;
+        case millimeters:
+            return input * dots_per_mm_y;
+        case inches:
+            return input * dots_per_mm_y * 25.4;
     }
 }

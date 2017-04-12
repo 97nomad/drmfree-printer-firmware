@@ -3,18 +3,22 @@
 #include "gcode.h"
 
 // pins
-#define FORWARD_X 11
-#define BACKWARD_X 12
-#define FORWARD_Y 10
-#define BACKWARD_Y 9
+#define FORWARD_Y 12
+#define BACKWARD_Y 11
+#define FORWARD_X 10
+#define BACKWARD_X 9
 
 #define INTERRUPT_X 0
 #define ENCODER_X_A 2
-#define ENCODER_X_B 3
+#define ENCODER_X_B 4
+#define INTERRUPT_Y 1
+#define ENCODER_Y_A 3
+#define ENCODER_Y_B 7
 #define PWM_X 5
+#define PWM_Y 6
 
 #define DPMM_X 6
-#define DPMM_Y 4
+#define DPMM_Y 25
 
 bool debug = false;
 
@@ -22,10 +26,10 @@ volatile int coord_x = 0;
 int coord_y = 0;
 
 String text_buffer = "";
-GCode gcode(6, 150);
+GCode gcode(DPMM_X, DPMM_Y);
 
 Engine x_engine(FORWARD_X, BACKWARD_X, PWM_X);
-Engine y_engine(FORWARD_Y, BACKWARD_Y, PWM_X);
+Engine y_engine(FORWARD_Y, BACKWARD_Y, PWM_Y);
 
 int target_x = 0;
 int target_y = 0;
@@ -52,13 +56,18 @@ void setup()
 {
   pinMode(ENCODER_X_A, INPUT);
   pinMode(ENCODER_X_B, INPUT);
+  pinMode(ENCODER_Y_A, INPUT);
+  pinMode(ENCODER_Y_B, INPUT);
   attachInterrupt(INTERRUPT_X, x_encoder_interrupt, FALLING);
+  attachInterrupt(INTERRUPT_Y, y_encoder_interrupt, FALLING);
   pinMode(FORWARD_X, OUTPUT);
   pinMode(BACKWARD_X, OUTPUT);
   pinMode(BACKWARD_Y, OUTPUT);
   pinMode(FORWARD_Y, OUTPUT);
 
   pinMode(PWM_X, OUTPUT);
+  pinMode(PWM_Y, OUTPUT);
+  analogWrite(PWM_Y, 255);
   pid_x.SetSampleTime(window_size);
   pid_x.SetOutputLimits(200, 255); // Set min and max limits to PWM
   Serial.begin(9600);
@@ -100,7 +109,7 @@ void parse_string(String text)
   switch (text[0])
   {
   case 'X':
-    target_x = gcode.convert_to_points(text.substring(1).toFloat());
+    target_x = gcode.convert_to_points_x(text.substring(1).toFloat());
     endpoint = target_x;
     pid_x.SetMode(AUTOMATIC);
     if (target_x < coord_x)
@@ -117,20 +126,16 @@ void parse_string(String text)
     }
     break;
   case 'Y':
-    target_y = gcode.convert_to_points(text.substring(1).toFloat());
+    target_y = gcode.convert_to_points_y(text.substring(1).toFloat());
     if (target_y < coord_y)
     {
       state = backward_y;
       y_engine.StartBackward();
-      delay(coord_y - target_y);
-      coord_y = target_y;
     }
     else
     {
       state = forward_y;
       y_engine.StartForward();
-      delay(target_y - coord_y);
-      coord_y = target_y;
     }
     break;
   case 'S':
@@ -187,11 +192,23 @@ void x_encoder_interrupt()
 {
   if (digitalRead(ENCODER_X_B))
   {
-    coord_x--;
+    coord_x++;
   }
   else
   {
-    coord_x++;
+    coord_x--;
+  }
+}
+
+void y_encoder_interrupt()
+{
+  if (digitalRead(ENCODER_Y_B))
+  {
+    coord_y++;
+  }
+  else
+  {
+    coord_y--;
   }
 }
 
@@ -217,6 +234,7 @@ void stop_y()
   state = waiting;
 }
 
-void ok() {
+void ok()
+{
   Serial.println("OK");
 }
