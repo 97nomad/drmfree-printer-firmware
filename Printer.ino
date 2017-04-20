@@ -17,13 +17,13 @@
 #define PWM_X 5
 #define PWM_Y 6
 
+#define MIN_SPEED_X 180
+#define MAX_SPEED_X 220
+#define MIN_SPEED_Y 220
+#define MAX_SPEED_Y 240
+
 #define DPMM_X 6
 #define DPMM_Y 25
-
-bool debug = false;
-
-volatile int coord_x = 0;
-int coord_y = 0;
 
 String text_buffer = "";
 GCode gcode(DPMM_X, DPMM_Y);
@@ -31,16 +31,17 @@ GCode gcode(DPMM_X, DPMM_Y);
 Engine x_engine(FORWARD_X, BACKWARD_X, PWM_X);
 Engine y_engine(FORWARD_Y, BACKWARD_Y, PWM_Y);
 
-int target_x = 0;
-int target_y = 0;
-
 unsigned long uptime, last_uptime = 0;
 
-double endpoint, input, output = 0;
+double target_x = 0, target_y = 0;
+volatile double coord_x = 0, coord_y = 0;
+double pwm_x = 255, pwm_y = 255;
 int window_size = 100;
+
 double aggKp = 4, aggKi = 0.2, aggKd = 1;
 double consKp = 1, consKi = 0.05, consKd = 0.25;
-PID pid_x(&input, &output, &endpoint, consKp, consKi, consKd, DIRECT);
+PID pid_x(&coord_x, &pwm_x, &target_x, consKp, consKi, consKd, DIRECT);
+PID pid_y(&coord_y, &pwm_y, &target_y, consKp, consKi, consKd, DIRECT);
 
 enum State
 {
@@ -67,9 +68,10 @@ void setup()
 
   pinMode(PWM_X, OUTPUT);
   pinMode(PWM_Y, OUTPUT);
-  analogWrite(PWM_Y, 255);
   pid_x.SetSampleTime(window_size);
-  pid_x.SetOutputLimits(200, 255); // Set min and max limits to PWM
+  pid_x.SetOutputLimits(MIN_SPEED_X, MAX_SPEED_X);
+  pid_y.SetSampleTime(window_size);
+  pid_y.SetOutputLimits(MIN_SPEED_Y, MAX_SPEED_Y);
   Serial.begin(9600);
 }
 
@@ -110,8 +112,8 @@ void parse_string(String text)
   {
   case 'X':
     target_x = gcode.convert_to_points_x(text.substring(1).toFloat());
-    endpoint = target_x;
-    pid_x.SetMode(AUTOMATIC);
+    pwm_x = MIN_SPEED_X;
+    x_engine.SetSpeed(MIN_SPEED_X);
     if (target_x < coord_x)
     {
       state = backward_x;
@@ -124,19 +126,25 @@ void parse_string(String text)
       pid_x.SetControllerDirection(DIRECT);
       x_engine.StartForward();
     }
+    pid_x.SetMode(AUTOMATIC);
     break;
   case 'Y':
     target_y = gcode.convert_to_points_y(text.substring(1).toFloat());
+    pwm_y = MIN_SPEED_Y;
+    y_engine.SetSpeed(MIN_SPEED_Y);
     if (target_y < coord_y)
     {
       state = backward_y;
+      pid_y.SetControllerDirection(REVERSE);
       y_engine.StartBackward();
     }
     else
     {
       state = forward_y;
+      pid_y.SetControllerDirection(DIRECT);
       y_engine.StartForward();
     }
+    pid_y.SetMode(AUTOMATIC);
     break;
   case 'S':
     disable_all();
@@ -155,10 +163,6 @@ void parse_string(String text)
     target_y = 0;
     ok();
     break;
-  case 'D':
-    debug = !debug;
-    ok();
-    break;
   case 'G':
     gcode.parse(text.substring(1).toInt());
     ok();
@@ -171,45 +175,36 @@ void parse_string(String text)
 
 void pid_interrupt()
 {
-  input = coord_x;
   if (abs(target_x - coord_x) <= 100)
-  {
     pid_x.SetTunings(consKp, consKi, consKd);
-  }
   else
-  {
     pid_x.SetTunings(aggKp, aggKi, aggKd);
-  }
+
+  if (abs(target_y - coord_y) <= 100)
+    pid_y.SetTunings(consKp, consKi, consKd);
+  else
+    pid_y.SetTunings(aggKp, aggKi, aggKd);
+
   if (pid_x.Compute())
-    x_engine.SetSpeed(output);
-  if (debug && (state == forward_x || state == backward_x))
-  {
-    Serial.println(output);
-  }
+    x_engine.SetSpeed(pwm_x);
+  if (pid_y.Compute())
+    y_engine.SetSpeed(pwm_y);
 }
 
 void x_encoder_interrupt()
 {
   if (digitalRead(ENCODER_X_B))
-  {
     coord_x++;
-  }
   else
-  {
     coord_x--;
-  }
 }
 
 void y_encoder_interrupt()
 {
   if (digitalRead(ENCODER_Y_B))
-  {
     coord_y++;
-  }
   else
-  {
     coord_y--;
-  }
 }
 
 void disable_all()
@@ -220,16 +215,18 @@ void disable_all()
 
 void stop_x()
 {
+  pwm_x = 255;
   x_engine.Stop();
   pid_x.SetMode(MANUAL);
-  output = 255;
   Serial.println("OK");
   state = waiting;
 }
 
 void stop_y()
 {
+  pwm_y = 255;
   y_engine.Stop();
+  pid_y.SetMode(MANUAL);
   Serial.println("OK");
   state = waiting;
 }
