@@ -17,10 +17,10 @@
 #define PWM_X 5
 #define PWM_Y 6
 
-#define MIN_SPEED_X 180
-#define MAX_SPEED_X 220
-#define MIN_SPEED_Y 220
-#define MAX_SPEED_Y 240
+int min_speed_x = 180;
+int max_speed_x = 220;
+int min_speed_y = 220;
+int max_speed_y = 240;
 
 #define DPMM_X 6
 #define DPMM_Y 25
@@ -69,9 +69,8 @@ void setup()
   pinMode(PWM_X, OUTPUT);
   pinMode(PWM_Y, OUTPUT);
   pid_x.SetSampleTime(window_size);
-  pid_x.SetOutputLimits(MIN_SPEED_X, MAX_SPEED_X);
   pid_y.SetSampleTime(window_size);
-  pid_y.SetOutputLimits(MIN_SPEED_Y, MAX_SPEED_Y);
+  update_pid_limits();
   Serial.begin(9600);
 }
 
@@ -112,8 +111,8 @@ void parse_string(String text)
   {
   case 'X':
     target_x = gcode.convert_to_points_x(text.substring(1).toFloat());
-    pwm_x = MIN_SPEED_X;
-    x_engine.SetSpeed(MIN_SPEED_X);
+    pwm_x = min_speed_x;
+    x_engine.SetSpeed(min_speed_x);
     if (target_x < coord_x)
     {
       state = backward_x;
@@ -130,8 +129,8 @@ void parse_string(String text)
     break;
   case 'Y':
     target_y = gcode.convert_to_points_y(text.substring(1).toFloat());
-    pwm_y = MIN_SPEED_Y;
-    y_engine.SetSpeed(MIN_SPEED_Y);
+    pwm_y = min_speed_y;
+    y_engine.SetSpeed(min_speed_y);
     if (target_y < coord_y)
     {
       state = backward_y;
@@ -165,6 +164,26 @@ void parse_string(String text)
     break;
   case 'G':
     gcode.parse(text.substring(1).toInt());
+    ok();
+    break;
+  case 'N':
+    min_speed_x = text.substring(1).toInt();
+    update_pid_limits();
+    ok();
+    break;
+  case 'M':
+    max_speed_x = text.substring(1).toInt();
+    update_pid_limits();
+    ok();
+    break;
+  case 'J':
+    min_speed_y = text.substring(1).toInt();
+    update_pid_limits();
+    ok();
+    break;
+  case 'K':
+    max_speed_y = text.substring(1).toInt();
+    update_pid_limits();
     ok();
     break;
   default:
@@ -234,4 +253,9 @@ void stop_y()
 void ok()
 {
   Serial.println("OK");
+}
+
+void update_pid_limits() {
+  pid_x.SetOutputLimits(min_speed_x, max_speed_x);
+  pid_y.SetOutputLimits(min_speed_y, max_speed_y);
 }
