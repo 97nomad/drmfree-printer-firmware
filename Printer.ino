@@ -17,6 +17,8 @@
 #define PWM_X 5
 #define PWM_Y 6
 
+bool debug = false;
+
 int min_speed_x = 180;
 int max_speed_x = 220;
 int min_speed_y = 220;
@@ -98,8 +100,20 @@ void loop()
 	int delta_t = uptime - last_uptime;
 	if (delta_t >= window_size)
 	{
-		pid_interrupt();
 		last_uptime = uptime;
+		pid_interrupt();
+
+		if (debug) 
+		{
+			Serial.print("PX ");
+			Serial.println(coord_x);
+			Serial.print("PY ");
+			Serial.println(coord_y);
+			Serial.print("SX ");
+			Serial.println(speed_x);
+			Serial.print("SY ");
+			Serial.println(speed_y);
+		}
 	}
 
 	// Останавливает двигатель в target_{x,y}
@@ -188,6 +202,10 @@ void parse_command(String text)
 		case 'K':
 			max_speed_y = text.substring(1).toInt();
 			update_pid_limits();
+			ok();
+			break;
+		case 'D':
+			debug = true;
 			ok();
 			break;
 		default:
