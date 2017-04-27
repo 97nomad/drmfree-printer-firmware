@@ -34,6 +34,7 @@ Engine x_engine(FORWARD_X, BACKWARD_X, PWM_X);
 Engine y_engine(FORWARD_Y, BACKWARD_Y, PWM_Y);
 
 double target_x = 0, target_y = 0;
+double prev_coord_x = 0, prev_coord_y = 0;	// Для вычисления скорости
 volatile double coord_x = 0, coord_y = 0;
 double pwm_x = 255, pwm_y = 255;
 int window_size = 100;
@@ -207,6 +208,11 @@ void pid_interrupt()
 		pid_y.SetTunings(consKp, consKi, consKd);
 	else
 		pid_y.SetTunings(aggKp, aggKi, aggKd);
+
+	speed_x = abs(prev_coord_x - coord_x) / 0.1;
+	speed_y = abs(prev_coord_y - coord_y) / 0.1;
+	prev_coord_x = coord_x;
+	prev_coord_y = coord_y;
 
 	// Непосредственно тут работает сам ПИД-регулятор
 	if (pid_x.Compute())
