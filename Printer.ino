@@ -105,13 +105,13 @@ void loop()
 
 		if (debug) 
 		{
-			Serial.print("PX ");
+			Serial.print("PX:");
 			Serial.print(coord_x);
-			Serial.print(" PY ");
+			Serial.print(" PY:");
 			Serial.print(coord_y);
-			Serial.print(" SX ");
+			Serial.print(" SX:");
 			Serial.print(speed_x);
-			Serial.print(" SY ");
+			Serial.print(" SY:");
 			Serial.println(speed_y);
 		}
 	}
