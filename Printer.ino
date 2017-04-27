@@ -17,7 +17,7 @@
 #define PWM_X 5
 #define PWM_Y 6
 
-bool debug = false;
+bool debug = true;
 
 int min_speed_x = 180;
 int max_speed_x = 220;
@@ -106,12 +106,12 @@ void loop()
 		if (debug) 
 		{
 			Serial.print("PX ");
-			Serial.println(coord_x);
-			Serial.print("PY ");
-			Serial.println(coord_y);
-			Serial.print("SX ");
-			Serial.println(speed_x);
-			Serial.print("SY ");
+			Serial.print(coord_x);
+			Serial.print(" PY ");
+			Serial.print(coord_y);
+			Serial.print(" SX ");
+			Serial.print(speed_x);
+			Serial.print(" SY ");
 			Serial.println(speed_y);
 		}
 	}
