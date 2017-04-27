@@ -77,6 +77,7 @@ void setup()
 
 void loop()
 {
+	// Чтение из UART
 	if (Serial.available() > 0 && state == waiting)
 	{
 		char symbol = Serial.read();
@@ -86,12 +87,12 @@ void loop()
 		}
 		else
 		{
-			parse_string(text_buffer);
+			parse_command(text_buffer);
 			text_buffer = "";
 		}
 	}
 
-	// Timer
+	// Костыльный таймер на window_size секунд
 	uptime = millis();
 	int delta_t = uptime - last_uptime;
 	if (delta_t >= window_size)
@@ -100,13 +101,14 @@ void loop()
 		last_uptime = uptime;
 	}
 
+	// Останавливает двигатель в target_{x,y}
 	if ((state == forward_x && coord_x >= target_x) || (state == backward_x && coord_x <= target_x))
 		stop_x();
 	else if ((state == forward_y && coord_y >= target_y) || (state == backward_y && coord_y <= target_y))
 		stop_y();
 }
 
-void parse_string(String text)
+void parse_command(String text)
 {
 	switch (text[0])
 	{
@@ -148,7 +150,7 @@ void parse_string(String text)
 			break;
 		case 'S':
 			disable_all();
-			Serial.println("OK");
+			ok();
 			break;
 		case 'I':
 			Serial.print("X: ");
@@ -206,6 +208,7 @@ void pid_interrupt()
 	else
 		pid_y.SetTunings(aggKp, aggKi, aggKd);
 
+	// Непосредственно тут работает сам ПИД-регулятор
 	if (pid_x.Compute())
 		x_engine.SetSpeed(pwm_x);
 	if (pid_y.Compute())
@@ -239,7 +242,7 @@ void stop_x()
 	pwm_x = 255;
 	x_engine.Stop();
 	pid_x.SetMode(MANUAL);
-	Serial.println("OK");
+	ok();
 	state = waiting;
 }
 
@@ -248,7 +251,7 @@ void stop_y()
 	pwm_y = 255;
 	y_engine.Stop();
 	pid_y.SetMode(MANUAL);
-	Serial.println("OK");
+	ok();
 	state = waiting;
 }
 

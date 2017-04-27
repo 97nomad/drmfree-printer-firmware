@@ -14,7 +14,7 @@ class Engine {
         int pin_forward;
         int pin_backward;
         int pin_pwm;
-        bool lock;
+        bool is_working;
 };
 
 #endif
