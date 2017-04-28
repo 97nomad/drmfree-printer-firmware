@@ -140,36 +140,20 @@ void parse_command(String text)
 			target_x = gcode.convert_to_points_x(text.substring(1).toFloat());
 			pwm_x = min_speed_x;
 			x_engine.SetSpeed(min_speed_x);
-			if (target_x < coord_x)
-			{
-				state = backward_x;
-				pid_x.SetControllerDirection(REVERSE);
-				x_engine.StartBackward();
-			}
+			if (target_x > coord_x)
+				state_forward_x();
 			else
-			{
-				state = forward_x;
-				pid_x.SetControllerDirection(DIRECT);
-				x_engine.StartForward();
-			}
+				state_backward_x();
 			pid_x.SetMode(AUTOMATIC);
 			break;
 		case 'Y':
 			target_y = gcode.convert_to_points_y(text.substring(1).toFloat());
 			pwm_y = min_speed_y;
 			y_engine.SetSpeed(min_speed_y);
-			if (target_y < coord_y)
-			{
-				state = backward_y;
-				pid_y.SetControllerDirection(REVERSE);
-				y_engine.StartBackward();
-			}
+			if (target_y > coord_y)
+				state_forward_y();
 			else
-			{
-				state = forward_y;
-				pid_y.SetControllerDirection(DIRECT);
-				y_engine.StartForward();
-			}
+				state_backward_y();
 			pid_y.SetMode(AUTOMATIC);
 			break;
 		case 'S':
@@ -236,8 +220,8 @@ void pid_interrupt()
 	else
 		pid_y.SetTunings(aggKp, aggKi, aggKd);
 
-	speed_x = abs(prev_coord_x - coord_x) / 0.1;
-	speed_y = abs(prev_coord_y - coord_y) / 0.1;
+	speed_x = abs(prev_coord_x - coord_x) / (1000 / window_size);
+	speed_y = abs(prev_coord_y - coord_y) / (1000 / window_size);
 	prev_coord_x = coord_x;
 	prev_coord_y = coord_y;
 
@@ -246,6 +230,36 @@ void pid_interrupt()
 		x_engine.SetSpeed(pwm_x);
 	if (pid_y.Compute())
 		y_engine.SetSpeed(pwm_y);
+}
+
+void state_forward_x() 
+{
+	state = forward_x;
+	pid_x.SetControllerDirection(DIRECT);
+	x_engine.StartForward();
+}
+
+void state_backward_x()
+{
+	state = backward_x;
+	pid_x.SetControllerDirection(REVERSE);
+	x_engine.StartBackward();
+
+}
+
+void state_forward_y() 
+{
+	state = forward_y;
+	pid_y.SetControllerDirection(DIRECT);
+	y_engine.StartForward();
+}
+
+void state_backward_y() 
+{
+	state = backward_y;
+	pid_y.SetControllerDirection(REVERSE);
+	y_engine.StartBackward();
+
 }
 
 void x_encoder_interrupt()
