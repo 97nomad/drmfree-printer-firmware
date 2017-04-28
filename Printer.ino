@@ -103,16 +103,25 @@ void loop()
 		last_uptime = uptime;
 		pid_interrupt();
 
-		if (debug) 
+		if (debug && state != waiting) 
 		{
 			Serial.print("PX:");
 			Serial.print(coord_x);
+
 			Serial.print(" PY:");
 			Serial.print(coord_y);
+
 			Serial.print(" SX:");
 			Serial.print(speed_x);
+
 			Serial.print(" SY:");
-			Serial.println(speed_y);
+			Serial.print(speed_y);
+
+			Serial.print(" OX:");
+			Serial.print(pwm_x);
+
+			Serial.print(" OY:");
+			Serial.println(pwm_y);
 		}
 	}
 
