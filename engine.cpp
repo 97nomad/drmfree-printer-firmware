@@ -24,7 +24,7 @@ void Engine::StartBackward() {
 void Engine::Stop() {
     digitalWrite(pin_forward, LOW);
     digitalWrite(pin_backward, LOW);
-    SetSpeed(255);
+    SetSpeed(255);	// need for short-circuit braking
     is_working = false;
 }
 
