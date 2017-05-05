@@ -20,5 +20,8 @@ This firmware can be controlled by [drmfree-printer-software](https://github.com
   D     - enable debug mode
 ```
 
+### Circuit diagram
+[here](https://github.com/97nomad/drmfree-printer-firmware/blob/master/doc/circuit_diagram.png)
+
 ## Some video demonstration
 [![link to Youtube](https://img.youtube.com/vi/kIhLO65ZZnQ/0.jpg)](https://www.youtube.com/watch?v=kIhLO65ZZnQ)
