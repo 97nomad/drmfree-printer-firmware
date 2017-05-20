@@ -1,5 +1,4 @@
-#ifndef gcode_h
-#define gcode_h
+#pragma once
 
 #include "Arduino.h"
 
@@ -23,4 +22,3 @@ class GCode
         int dots_per_mm_x;
         int dots_per_mm_y;
 };
-#endif

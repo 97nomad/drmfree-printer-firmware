@@ -1,5 +1,4 @@
-#ifndef engine_h
-#define engine_h
+#pragma once
 
 #include "Arduino.h"
 
@@ -16,5 +15,3 @@ class Engine {
         int pin_pwm;
         bool is_working;
 };
-
-#endif
